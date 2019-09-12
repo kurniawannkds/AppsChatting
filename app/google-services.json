@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "931374988822",
+    "firebase_url": "https://appschat-21fc1.firebaseio.com",
+    "project_id": "appschat-21fc1",
+    "storage_bucket": "appschat-21fc1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:931374988822:android:40eb740f0600632c3aff37",
+        "android_client_info": {
+          "package_name": "com.androiddevnkds.myapplication"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "931374988822-souoq1sdiji14ekss1h4rehikurdlgt8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.androiddevnkds.myapplication",
+            "certificate_hash": "6fb66208b9c42eb40e85f1117d305614a027e40a"
+          }
+        },
+        {
+          "client_id": "931374988822-f00o7he2g4mt6a2r93dj04q74irteo7b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDhM8g2sfLIehb78P93lNqMnUJt33GZys"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "931374988822-f00o7he2g4mt6a2r93dj04q74irteo7b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
