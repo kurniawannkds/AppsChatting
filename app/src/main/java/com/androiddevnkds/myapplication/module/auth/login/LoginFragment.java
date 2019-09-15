@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,11 +14,25 @@ import android.widget.Toast;
 
 import com.androiddevnkds.myapplication.R;
 import com.androiddevnkds.myapplication.base.BaseFragment;
+import com.androiddevnkds.myapplication.data.DataManager;
 import com.androiddevnkds.myapplication.databinding.FragmentLoginBinding;
 import com.androiddevnkds.myapplication.module.auth.register.RegisterFragment;
 import com.androiddevnkds.myapplication.module.main.MainActivity;
 import com.androiddevnkds.myapplication.utils.helper.FragmentHelper;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GoogleAuthProvider;
 
 import java.util.Objects;
 
@@ -27,11 +42,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
 import cn.pedant.SweetAlert.SweetAlertDialog;
 
+import static androidx.constraintlayout.widget.Constraints.TAG;
+
 public class LoginFragment extends BaseFragment implements LoginContract.loginView {
 
     private Context mContext;
     private FragmentLoginBinding mBinding;
     private LoginPresenter loginPresenter;
+    private static final int RC_SIGN_IN = 100 ;
 
     public LoginFragment(){
         setArguments(new Bundle());
@@ -88,6 +106,52 @@ public class LoginFragment extends BaseFragment implements LoginContract.loginVi
                         new RegisterFragment(), null, false);
             }
         });
+
+        mBinding.btnLoginGoogle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                showProgressBar();
+
+                GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestIdToken(getString(R.string.default_web_client_id))
+                        .requestEmail()
+                        .build();
+
+                GoogleSignInClient mGoogleSignInClient = GoogleSignIn.getClient(mContext,gso);
+
+                Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+                startActivityForResult(signInIntent, RC_SIGN_IN);
+            }
+        });
+
+        mBinding.tvForgotPassword.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                mBinding.lyDialogForgotPass.etForgotPassword.setText("");
+                mBinding.lyBlack.lyBlack.setVisibility(View.VISIBLE);
+                mBinding.lyDialogForgotPass.lyDialogForgotPass.setVisibility(View.VISIBLE);
+            }
+        });
+
+        mBinding.lyBlack.lyBlack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                mBinding.lyBlack.lyBlack.setVisibility(View.GONE);
+                mBinding.lyDialogForgotPass.lyDialogForgotPass.setVisibility(View.GONE);
+            }
+        });
+
+        mBinding.lyDialogForgotPass.btnResetPass.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                String email = mBinding.lyDialogForgotPass.etForgotPassword.getText().toString().trim();
+                loginPresenter.forgotPassword(email);
+            }
+        });
     }
 
     //mvp
@@ -123,7 +187,7 @@ public class LoginFragment extends BaseFragment implements LoginContract.loginVi
 //            pDialog.getProgressHelper().setBarColor(Color.parseColor("#BA5B50"));
             pDialog.setTitleText(split[0]);
             pDialog.setContentText(split[1]);
-            pDialog.setCancelable(true);
+            pDialog.setCanceledOnTouchOutside(true);
             pDialog.hideConfirmButton();
             pDialog.show();
             pDialog.setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
@@ -149,5 +213,103 @@ public class LoginFragment extends BaseFragment implements LoginContract.loginVi
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             Objects.requireNonNull(getActivity()).finish();
         }
+    }
+
+    @Override
+    public void onFailedResetPass(int tipe, String message) {
+        if(tipe == 1){
+           mBinding.lyDialogForgotPass.etForgotPassword.setError(message);
+        }
+        else {
+
+            String[] split = message.trim().split("---");
+            final SweetAlertDialog pDialog = new SweetAlertDialog(mContext, SweetAlertDialog.ERROR_TYPE);
+//            pDialog.getProgressHelper().setBarColor(Color.parseColor("#BA5B50"));
+            pDialog.setTitleText(split[0]);
+            pDialog.setContentText(split[1]);
+            pDialog.hideConfirmButton();
+            pDialog.setCanceledOnTouchOutside(true);
+            pDialog.show();
+        }
+    }
+
+    @Override
+    public void onSuccessResetPassword(String message) {
+
+        mBinding.lyBlack.lyBlack.setVisibility(View.GONE);
+        mBinding.lyDialogForgotPass.lyDialogForgotPass.setVisibility(View.GONE);
+        String[] split = message.trim().split("---");
+        final SweetAlertDialog pDialog = new SweetAlertDialog(mContext, SweetAlertDialog.SUCCESS_TYPE);
+//            pDialog.getProgressHelper().setBarColor(Color.parseColor("#BA5B50"));
+        pDialog.setTitleText(split[0]);
+        pDialog.setContentText(split[1]);
+        pDialog.setCanceledOnTouchOutside(true);
+        pDialog.setConfirmText("Oke");
+        pDialog.show();
+        pDialog.setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
+            @Override
+            public void onClick(SweetAlertDialog sDialog) {
+
+                pDialog.dismiss();
+            }
+        });
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
+        if (requestCode == RC_SIGN_IN) {
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            try {
+                // Google Sign In was successful, authenticate with Firebase
+                GoogleSignInAccount account = task.getResult(ApiException.class);
+                firebaseAuthWithGoogle(account);
+            } catch (ApiException e) {
+                // Google Sign In failed, update UI appropriately
+                Log.w(TAG, "Google sign in failed", e);
+                // ...
+            }
+        }
+    }
+
+    private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
+        Log.d(TAG, "firebaseAuthWithGoogle:" + acct.getId());
+
+        final FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
+        mAuth.signInWithCredential(credential)
+                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.d(TAG, "signInWithCredential:success");
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            if (user != null && user.getEmail() != null) {
+                                DataManager.can().setUserEmail(user.getEmail());
+                                hideProgressBar();
+                                //cuma dpt nama
+                                Log.e("NAMA", user.getDisplayName());
+
+                                showMain();
+                            }
+
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Log.w(TAG, "signInWithCredential:failure", task.getException());
+                            onFailed(3, "Authentication failed---check your email and password or sign up "+task.getException().getMessage());
+
+                        }
+
+                        // ...
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                onFailed(3, "Authentication failed---check your email and password or sign up "+e.getMessage());
+            }
+        });
     }
 }
