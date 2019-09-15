@@ -17,7 +17,7 @@ public class DataManager implements DataManagerType {
     }
 
     @Override
-    public String getUserInfoFromStorage() {
+    public String getUserEmail() {
         return sUserStorage.getUserEmail();
     }
 

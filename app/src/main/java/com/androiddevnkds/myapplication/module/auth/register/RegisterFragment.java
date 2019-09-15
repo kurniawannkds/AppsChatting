@@ -145,6 +145,8 @@ public class RegisterFragment extends BaseFragment implements RegisterContract.r
                 }
             });
         }
+
+        hideProgressBar();
     }
 
     @Override

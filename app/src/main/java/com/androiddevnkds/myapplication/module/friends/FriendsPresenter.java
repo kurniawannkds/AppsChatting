@@ -1,5 +1,6 @@
 package com.androiddevnkds.myapplication.module.friends;
 
+import com.androiddevnkds.myapplication.data.DataManager;
 import com.androiddevnkds.myapplication.model.UserModel;
 import com.androiddevnkds.myapplication.utils.konstanta.K;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -38,11 +39,21 @@ public class FriendsPresenter implements FriendsContract.friendsPresenter {
 
                 for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
                     UserModel userModel = documentSnapshot.toObject(UserModel.class);
-                    userModelList.add(userModel);
+                    if(DataManager.can().getUserEmail()!=null){
+                        if(!DataManager.can().getUserEmail().equalsIgnoreCase(userModel.getEmail())){
+                            userModelList.add(userModel);
+                        }
+                    }
                 }
 
-                friendsView.hideProgressBar();
-                friendsView.showUserList(userModelList);
+                if(userModelList.size()>0){
+                    friendsView.hideProgressBar();
+                    friendsView.showUserList(userModelList);
+                }
+                else {
+                    onFailed(1,"No other user---Invite your friends");
+                }
+
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override

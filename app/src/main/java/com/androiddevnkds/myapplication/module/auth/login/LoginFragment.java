@@ -207,6 +207,8 @@ public class LoginFragment extends BaseFragment implements LoginContract.loginVi
                 }
             });
         }
+
+        hideProgressBar();
     }
 
     @Override
@@ -235,6 +237,8 @@ public class LoginFragment extends BaseFragment implements LoginContract.loginVi
             pDialog.setCanceledOnTouchOutside(true);
             pDialog.show();
         }
+
+        hideProgressBar();
     }
 
     @Override
@@ -308,6 +312,7 @@ public class LoginFragment extends BaseFragment implements LoginContract.loginVi
                                     @Override
                                     public void onFailure(@NonNull Exception e) {
 
+                                        hideProgressBar();
                                         onFailed(3,"Register failed----Please try again");
                                     }
                                 });
@@ -315,12 +320,14 @@ public class LoginFragment extends BaseFragment implements LoginContract.loginVi
 
                             }
                             else {
+                                hideProgressBar();
                                 onFailed(3,"Register failed----Please try again");
                             }
 
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInWithCredential:failure", task.getException());
+                            hideProgressBar();
                             onFailed(3, "Authentication failed---check your email and password or sign up "+task.getException().getMessage());
 
                         }
@@ -330,6 +337,7 @@ public class LoginFragment extends BaseFragment implements LoginContract.loginVi
                 }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
+                hideProgressBar();
                 onFailed(3, "Authentication failed---check your email and password or sign up "+e.getMessage());
             }
         });

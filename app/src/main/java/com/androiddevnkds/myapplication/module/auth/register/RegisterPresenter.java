@@ -50,14 +50,21 @@ public class RegisterPresenter implements RegisterContract.registerPresenter {
                                 // Sign in success, update UI with the signed-in user's information
                                 Log.d(TAG, "createUserWithEmail:success");
 
+                                Log.e("regis","masuk sukses");
                                 final FirebaseUser user = mAuth.getCurrentUser();
 
                                 if (user != null && user.getEmail() != null) {
 
+                                    Log.e("regis","user gak null");
+
                                     FirebaseFirestore mFirestore = FirebaseFirestore.getInstance();
-                                    mFirestore.document("Users/"+user.getEmail()).set(userModel).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    Log.e("regis","Users/"+user.getEmail());
+                                    mFirestore.document("Users/"+user.getEmail()).set(userModel).
+                                            addOnSuccessListener(new OnSuccessListener<Void>() {
                                         @Override
                                         public void onSuccess(Void aVoid) {
+
+                                            Log.e("regis","masuk sukses add");
 
                                             DataManager.can().setUserEmail(user.getEmail());
                                             registerView.hideProgressBar();
@@ -66,6 +73,9 @@ public class RegisterPresenter implements RegisterContract.registerPresenter {
                                     }).addOnFailureListener(new OnFailureListener() {
                                         @Override
                                         public void onFailure(@NonNull Exception e) {
+
+                                            Log.e("regis","masuk failed");
+                                            Log.e("regis",e.getMessage());
 
                                             AuthCredential authCredential = EmailAuthProvider.getCredential(user.getEmail(), password);
                                             user.reauthenticate(authCredential).addOnCompleteListener(new OnCompleteListener<Void>() {
