@@ -13,9 +13,11 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.androiddevnkds.myapplication.R;
+import com.androiddevnkds.myapplication.adapter.UsersAdapter;
 import com.androiddevnkds.myapplication.base.BaseFragment;
 import com.androiddevnkds.myapplication.data.DataManager;
 import com.androiddevnkds.myapplication.databinding.FragmentLoginBinding;
+import com.androiddevnkds.myapplication.model.UserModel;
 import com.androiddevnkds.myapplication.module.auth.register.RegisterFragment;
 import com.androiddevnkds.myapplication.module.main.MainActivity;
 import com.androiddevnkds.myapplication.utils.helper.FragmentHelper;
@@ -26,6 +28,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.AuthCredential;
@@ -33,6 +36,7 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Objects;
 
@@ -286,14 +290,32 @@ public class LoginFragment extends BaseFragment implements LoginContract.loginVi
                         if (task.isSuccessful()) {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInWithCredential:success");
-                            FirebaseUser user = mAuth.getCurrentUser();
+                            final FirebaseUser user = mAuth.getCurrentUser();
                             if (user != null && user.getEmail() != null) {
-                                DataManager.can().setUserEmail(user.getEmail());
-                                hideProgressBar();
-                                //cuma dpt nama
-                                Log.e("NAMA", user.getDisplayName());
 
-                                showMain();
+
+                                UserModel userModel = new UserModel(user.getEmail(),user.getDisplayName(),"");
+                                FirebaseFirestore mFirestore = FirebaseFirestore.getInstance();
+                                mFirestore.document("Users/"+user.getEmail()).set(userModel).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+
+                                        DataManager.can().setUserEmail(user.getEmail());
+                                        hideProgressBar();
+                                        showMain();
+                                    }
+                                }).addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+
+                                        onFailed(3,"Register failed----Please try again");
+                                    }
+                                });
+
+
+                            }
+                            else {
+                                onFailed(3,"Register failed----Please try again");
                             }
 
                         } else {

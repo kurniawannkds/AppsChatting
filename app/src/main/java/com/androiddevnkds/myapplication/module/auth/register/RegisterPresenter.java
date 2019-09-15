@@ -8,10 +8,15 @@ import android.util.Patterns;
 import com.androiddevnkds.myapplication.data.DataManager;
 import com.androiddevnkds.myapplication.model.UserModel;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Objects;
 import java.util.concurrent.Executor;
@@ -29,7 +34,7 @@ public class RegisterPresenter implements RegisterContract.registerPresenter {
     }
 
     @Override
-    public void register(UserModel userModel, String password, String confirmPass) {
+    public void register(final UserModel userModel, final String password, String confirmPass) {
 
         registerView.showProgressBar();
         if(validateInput(userModel,password,confirmPass)){}
@@ -44,14 +49,44 @@ public class RegisterPresenter implements RegisterContract.registerPresenter {
                             if (task.isSuccessful()) {
                                 // Sign in success, update UI with the signed-in user's information
                                 Log.d(TAG, "createUserWithEmail:success");
-                                FirebaseUser user = mAuth.getCurrentUser();
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                                    Log.e("EMAIL", Objects.requireNonNull(user.getEmail()));
-                                }
+
+                                final FirebaseUser user = mAuth.getCurrentUser();
+
                                 if (user != null && user.getEmail() != null) {
-                                    DataManager.can().setUserEmail(user.getEmail());
-                                    registerView.hideProgressBar();
-                                    registerView.showMain();
+
+                                    FirebaseFirestore mFirestore = FirebaseFirestore.getInstance();
+                                    mFirestore.document("Users/"+user.getEmail()).set(userModel).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void aVoid) {
+
+                                            DataManager.can().setUserEmail(user.getEmail());
+                                            registerView.hideProgressBar();
+                                            registerView.showMain();
+                                        }
+                                    }).addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+
+                                            AuthCredential authCredential = EmailAuthProvider.getCredential(user.getEmail(), password);
+                                            user.reauthenticate(authCredential).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                @Override
+                                                public void onComplete(@NonNull Task<Void> task) {
+                                                    user.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                        @Override
+                                                        public void onComplete(@NonNull Task<Void> task) {
+                                                            if (task.isSuccessful()) {
+                                                                Log.d(TAG, "User account deleted!");
+                                                            }
+                                                        }
+                                                    });
+                                                }
+                                            });
+                                            registerView.onFailed(10,"Register failed----Please try again");
+                                        }
+                                    });
+                                }
+                                else {
+                                    registerView.onFailed(10,"Register failed----Please try again");
                                 }
 
                             } else {

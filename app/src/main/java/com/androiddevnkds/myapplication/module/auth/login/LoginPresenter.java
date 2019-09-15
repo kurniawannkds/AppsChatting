@@ -54,9 +54,7 @@ public class LoginPresenter implements LoginContract.loginPresenter {
                                 // Sign in success, update UI with the signed-in user's information
                                 Log.d(TAG, "signInWithEmail:success");
                                 FirebaseUser user = mAuth.getCurrentUser();
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                                    Log.e("EMAIL", Objects.requireNonNull(user.getEmail()));
-                                }
+
                                 if (user != null && user.getEmail() != null) {
                                     DataManager.can().setUserEmail(user.getEmail());
                                     loginView.hideProgressBar();
